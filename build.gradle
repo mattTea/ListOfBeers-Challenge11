@@ -17,11 +17,15 @@ dependencies {
     compile group: "org.http4k", name: "http4k-client-okhttp", version: "3.163.0"
     compile group: "org.http4k", name: "http4k-format-jackson", version: "3.165.0"
 
+//    implementation "com.fasterxml.jackson.core:jackson-databind:2.9.9.2"
+
     testCompile "com.willowtreeapps.assertk:assertk-jvm:0.18"
 
     testImplementation "org.spekframework.spek2:spek-dsl-jvm:2.0.5"
     testRuntimeOnly "org.spekframework.spek2:spek-runner-junit5:2.0.5"
     testRuntimeOnly "org.jetbrains.kotlin:kotlin-reflect"
+    testImplementation "io.mockk:mockk:1.9.3"
+//    testImplementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.9"
 }
 
 test {

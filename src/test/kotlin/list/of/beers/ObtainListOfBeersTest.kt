@@ -25,7 +25,6 @@ object ObtainListOfBeersTest : Spek({
 
         it("should return json string containing 'Pubs' array") {
             val response = client(Request(GET, url))
-            println(Request(GET, url))
 
             assertThat(response.bodyString()).contains("Pubs")
         }
@@ -44,42 +43,52 @@ object ObtainListOfBeersTest : Spek({
     }
 
     describe("obtainListOfBeers") {
+
+        val fakePubFinderResponse = """{
+              "pubs": [
+                {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS"},
+                {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString"}
+              ]
+            }"""
+
+        val mockPubFinder = Response(OK)
+            .body(fakePubFinderResponse)
+            .header("Content-Type", "application/json")
+
         it("should return a String") {
-            assertThat(obtainListOfBeers("")).isInstanceOf(String::class.java)
+            assertThat(obtainListOfBeers(mockPubFinder)).isInstanceOf(String::class.java)
         }
 
-//        it("should return a list of beer records ") {
-//            val fakePubFinderResponse = """{
-//              "Pubs": [
-//                {"Name": "Phoenix", "RegularBeers": ["Youngs"], "GuestBeers": ["Doom Bar"], "PubService": "phoenixPSS"},
-//                {"Name": "Beer House", "RegularBeers": ["Old Speckled Hen"], "PubService": "beerHousePubServiceString"}
-//              ]
-//            }"""
-//
-//            val beers = """{
-//              "Beers": [
-//                {
-//                  "Name": "Youngs",
-//                  "PubName": "Phoenix",
-//                  "PubService": "phoenixPSS",
-//                  "RegularBeer": true
-//                },
-//                {
-//                  "Name": "Doom Bar",
-//                  "PubName": "14 Palace Street Victoria London SW1E 5JA",
-//                  "PubService": "phoenixPSS",
-//                  "RegularBeer": false
-//                },
-//                {
-//                  "Name": "Old Speckled Hen",
-//                  "PubName": "Beer House",
-//                  "PubService": "beerHousePubServiceString",
-//                  "RegularBeer": true
-//                }
-//              ]
-//            }"""
-//
-//            assertThat(obtainListOfBeers(fakePubFinderResponse)).isEqualTo(beers)
-//        }
+        it("should return Beers response") {
+            assertThat(obtainListOfBeers(mockPubFinder)).contains("beers")
+        }
+
+        it("should return a list of beer records ") {
+
+            val beers = """{
+              "beers": [
+                {
+                  "name": "Youngs",
+                  "pubName": "Phoenix",
+                  "pubService": "phoenixPSS",
+                  "regularBeer": true
+                },
+                {
+                  "name": "Doom Bar",
+                  "pubName": "Phoenix",
+                  "pubService": "phoenixPSS",
+                  "regularBeer": false
+                },
+                {
+                  "name": "Old Speckled Hen",
+                  "pubName": "Beer House",
+                  "pubService": "beerHousePubServiceString",
+                  "regularBeer": true
+                }
+              ]
+            }""".replace("\\s".toRegex(), "")
+
+            assertThat(obtainListOfBeers(mockPubFinder).replace("\\s".toRegex(), "")).isEqualTo(beers)
+        }
     }
 })

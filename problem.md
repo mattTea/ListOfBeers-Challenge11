@@ -19,7 +19,7 @@
           - Then `obtainListOfBeers(fakePubFinder)` will return the `Beers` json
 
  
-3. Deserialise pub api response
+3. Deserialise pub api response using something like `body.auto<Pub>.toLens()`
     - Test additional fields on `Beer()` record that is created from the response
   
 3. Create `Beer()` record with the fields needed - `Name`, `PubName`, `PubService`, `RegularBeer`
