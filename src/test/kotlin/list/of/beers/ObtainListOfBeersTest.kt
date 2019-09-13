@@ -44,28 +44,30 @@ object ObtainListOfBeersTest : Spek({
 
     describe("obtainListOfBeers") {
 
-        val fakePubFinderResponse = """{
+        context("for pub api response with pubs") {
+
+            val fakePubFinderResponse = """{
               "pubs": [
                 {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS"},
                 {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString"}
               ]
             }"""
 
-        val mockPubFinder = Response(OK)
-            .body(fakePubFinderResponse)
-            .header("Content-Type", "application/json")
+            val mockPubFinder = Response(OK)
+                .body(fakePubFinderResponse)
+                .header("Content-Type", "application/json")
 
-        it("should return a String") {
-            assertThat(obtainListOfBeers(mockPubFinder)).isInstanceOf(String::class.java)
-        }
+            it("should return a String") {
+                assertThat(obtainListOfBeers(mockPubFinder)).isInstanceOf(String::class.java)
+            }
 
-        it("should return Beers response") {
-            assertThat(obtainListOfBeers(mockPubFinder)).contains("beers")
-        }
+            it("should return Beers response") {
+                assertThat(obtainListOfBeers(mockPubFinder)).contains("beers")
+            }
 
-        it("should return a list of beer records ") {
+            it("should return a list of beer records ") {
 
-            val beers = """{
+                val beers = """{
               "beers": [
                 {
                   "name": "Youngs",
@@ -88,7 +90,18 @@ object ObtainListOfBeersTest : Spek({
               ]
             }""".replace("\\s".toRegex(), "")
 
-            assertThat(obtainListOfBeers(mockPubFinder).replace("\\s".toRegex(), "")).isEqualTo(beers)
+                assertThat(obtainListOfBeers(mockPubFinder).replace("\\s".toRegex(), "")).isEqualTo(beers)
+            }
+        }
+
+        context("for pub api response with no pubs") {
+            val mockPubFinder = Response(OK)
+                .body("""{}""")
+                .header("Content-Type", "application/json")
+
+            it("should return empty response when no pubs returned from pub api") {
+                assertThat(obtainListOfBeers(mockPubFinder)).isEqualTo("{}")
+            }
         }
     }
 })
