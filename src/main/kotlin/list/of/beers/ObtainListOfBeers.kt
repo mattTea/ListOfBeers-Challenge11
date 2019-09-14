@@ -1,5 +1,7 @@
 package list.of.beers
 
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.http4k.client.OkHttp
 import org.http4k.core.Method.GET
@@ -10,12 +12,16 @@ internal fun obtainListOfBeers(pubFinder: Response): String {
 
     val beers = mutableListOf<Beer>()
 
-    // 1. Deserialise the response from pub api (get certain fields back from response body json string)
-    val returnedPubs = jacksonObjectMapper().readValue(pubFinder.bodyString(), PubsInArea::class.java)
+    val returnedPubs = jacksonObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+        .readValue(
+            pubFinder.bodyString(),
+            PubsInArea::class.java
+        )
 
     if (returnedPubs.pubs == null) return "{}"
 
-    // 2. Construct a Beers object with required fields
     returnedPubs.pubs.map { pub ->
         val regularBeersList = pub.regularBeers?.toTypedArray() ?: emptyArray()
         val guestBeersList = pub.guestBeers?.toTypedArray() ?: emptyArray()
