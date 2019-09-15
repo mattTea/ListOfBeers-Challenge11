@@ -22,20 +22,27 @@ internal fun obtainListOfBeers(pubFinder: Response): String {
 
     if (returnedPubs.pubs == null) return "{}"
 
-    returnedPubs.pubs.map { pub ->
-        val regularBeersList = pub.regularBeers?.toTypedArray() ?: emptyArray()
-        val guestBeersList = pub.guestBeers?.toTypedArray() ?: emptyArray()
+    // sort returnedPubs.pubs by "Id" + "Branch"
+    // then sort by CreateTS <- add this in for the second test
+    // then call distinctBy { it.name }
 
-        val beersList = (regularBeersList + guestBeersList).toList()
-        beers.addAll(beersList.map {
-            Beer(
-                name = it,
-                pubName = pub.name,
-                pubService = pub.pubService,
-                regularBeer = pub.regularBeers?.contains(it) ?: false
-            )
-        })
-    }
+    returnedPubs.pubs
+        .sortedBy { it.id + it.branch }
+        .distinctBy { it.name }
+        .map { pub ->
+            val regularBeersList = pub.regularBeers?.toTypedArray() ?: emptyArray()
+            val guestBeersList = pub.guestBeers?.toTypedArray() ?: emptyArray()
+
+            val beersList = (regularBeersList + guestBeersList).toList()
+            beers.addAll(beersList.map {
+                Beer(
+                    name = it,
+                    pubName = pub.name,
+                    pubService = pub.pubService,
+                    regularBeer = pub.regularBeers?.contains(it) ?: false
+                )
+            })
+        }
 
     return jacksonObjectMapper().writeValueAsString(Beers(beers))
 }
@@ -59,7 +66,10 @@ internal data class Pub(
     val name: String,
     val regularBeers: List<String>?,
     val guestBeers: List<String>?,
-    val pubService: String
+    val pubService: String,
+    val id: String?,
+    val branch: String?,
+    val createTs: String?
 )
 
 internal data class PubsInArea(

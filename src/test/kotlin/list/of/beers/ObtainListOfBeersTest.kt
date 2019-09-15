@@ -4,6 +4,7 @@ import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
 import assertk.assertions.isInstanceOf
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
 import org.spekframework.spek2.Spek
@@ -90,9 +91,28 @@ object ObtainListOfBeersTest : Spek({
                 assertThat(obtainListOfBeers(secondMockPubFinder)).contains(""""name":"Old Speckled Hen","pubName":"Beer House"""")
             }
 
-            // Some pubs will be duplicated in the original json response, in this case only include the pub with the highest CreateTS (Id and Branch combined form the unique key for each pub).
-            it("should return pub with highest CreateTS if pub has duplicated in pub api response") {
+            context("for pub api response with duplicate pubs") {
 
+                val duplicatedPubsPubFinderResponse = """{
+                      "pubs": [
+                        {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS", "id": "16185", "branch": "WLD", "createTS": "2019-05-16 19:31:20"},
+                        {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS", "id": "16185", "branch": "WLD", "createTS": "2019-08-03 19:31:20"},
+                        {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString", "id": "12345", "branch": "Branch", "createTS": "2019-08-03 19:31:20"}
+                      ]
+                    }"""
+
+                val duplicatedPubsMockPubFinder = Response(OK)
+                    .body(duplicatedPubsPubFinderResponse)
+                    .header("Content-Type", "application/json")
+
+                it("should return only one of the duplicate pubs") {
+                    val deserializedBeers = jacksonObjectMapper()
+                        .readValue(
+                            obtainListOfBeers(duplicatedPubsMockPubFinder),
+                            Beers::class.java
+                        )
+                    assertThat(deserializedBeers.beers.count { it.name == "Doom Bar" && it.pubName == "Phoenix" }).isEqualTo(1)
+                }
             }
         }
 
