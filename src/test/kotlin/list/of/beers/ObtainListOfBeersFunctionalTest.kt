@@ -3,6 +3,8 @@ package list.of.beers
 import assertk.assertThat
 import assertk.assertions.contains
 import assertk.assertions.isEqualTo
+import assertk.assertions.isInstanceOf
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import org.http4k.client.OkHttp
 import org.http4k.core.Method
 import org.http4k.core.Request
@@ -35,10 +37,14 @@ object ObtainListOfBeersFunctionalTest : Spek({
         }
 
         it("should return json formatted Beer records") {
-            val firstBeerRecord = """"name":"Sharp#039;s Doom Bar","pubName":"Phoenix""""
-            val secondBeerRecord = """"name":"Brakspear Bitter","pubName":"Sports Bar and Grill Victoria""""
-            assertThat(obtainListOfBeers(pubFinder(url))).contains(firstBeerRecord)
-            assertThat(obtainListOfBeers(pubFinder(url))).contains(secondBeerRecord)
+            // this test should deserialize, then assert an instance of Beer
+            val deserializedBeers = jacksonObjectMapper()
+                .readValue(
+                    obtainListOfBeers(pubFinder(url)),
+                    Beers::class.java
+                )
+
+            assertThat(deserializedBeers.beers[0]).isInstanceOf(Beer::class.java)
         }
     }
 })

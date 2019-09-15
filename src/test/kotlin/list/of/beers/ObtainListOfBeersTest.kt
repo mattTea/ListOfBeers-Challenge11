@@ -30,8 +30,8 @@ object ObtainListOfBeersTest : Spek({
 
             val fakePubFinderResponse = """{
               "pubs": [
-                {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS"},
-                {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString"}
+                {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS", "id": "16185", "branch": "WLD", "createTS": "2019-08-03 19:31:20"},
+                {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString", "id": "12345", "branch": "Branch", "createTS": "2019-08-03 19:31:20"}
               ]
             }"""
 
@@ -78,8 +78,8 @@ object ObtainListOfBeersTest : Spek({
             it("should return 2 separate beer records if a beer is available in 2 pubs") {
                 val secondFakePubFinderResponse = """{
                   "pubs": [
-                    {"name": "Phoenix", "regularBeers": ["Youngs", "Old Speckled Hen"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS"},
-                    {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString"}
+                    {"name": "Phoenix", "regularBeers": ["Youngs", "Old Speckled Hen"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS", "id": "16185", "branch": "WLD", "createTS": "2019-08-03 19:31:20"},
+                    {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString", "id": "12345", "branch": "Branch", "createTS": "2019-08-03 19:31:20"}
                   ]
                 }"""
 
@@ -105,12 +105,13 @@ object ObtainListOfBeersTest : Spek({
                     .body(duplicatedPubsPubFinderResponse)
                     .header("Content-Type", "application/json")
 
-                it("should return only one of the duplicate pubs") {
+                it("should return beer records from only one of the duplicate pubs") {
                     val deserializedBeers = jacksonObjectMapper()
                         .readValue(
                             obtainListOfBeers(duplicatedPubsMockPubFinder),
                             Beers::class.java
                         )
+
                     assertThat(deserializedBeers.beers.count { it.name == "Doom Bar" && it.pubName == "Phoenix" }).isEqualTo(1)
                 }
             }
@@ -124,6 +125,23 @@ object ObtainListOfBeersTest : Spek({
             it("should return empty response when no pubs returned from pub api") {
                 assertThat(obtainListOfBeers(mockPubFinder)).isEqualTo("{}")
             }
+        }
+    }
+
+    describe("removePubDuplicates") {
+        val fakeReturnedPubsList = listOf(
+            Pub("Phoenix", listOf("Youngs"), listOf("Doom Bar"), "phoenixPSS", "16185", "WLD", "2019-05-16 19:31:20"),
+            Pub("Phoenix", listOf("Youngs"), listOf("Doom Bar"), "phoenixPSS", "16185", "WLD", "2019-08-03 19:31:20"),
+            Pub("Beer House", listOf("Old Speckled Hen"), null, "beerHousePubServiceString", "12345", "Branch", "2019-08-03 19:31:20")
+        )
+
+        it("should return only one of the duplicate pubs") {
+            assertThat(removePubDuplicates(fakeReturnedPubsList).size).isEqualTo(2)
+        }
+
+        it("should return only the pub with the highest CreateTS of the duplicates") {
+            assertThat(removePubDuplicates(fakeReturnedPubsList)[0].createTs).isEqualTo("2019-08-03 19:31:20")
+            assertThat(removePubDuplicates(fakeReturnedPubsList)[1].createTs).isEqualTo("2019-08-03 19:31:20")
         }
     }
 })
