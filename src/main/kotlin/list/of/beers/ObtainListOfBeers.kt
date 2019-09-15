@@ -34,15 +34,9 @@ internal data class PubsInArea(
 internal fun obtainListOfBeers(pubFinder: Response): String {
     val beers = mutableListOf<Beer>()
 
-    val returnedPubs = jacksonObjectMapper()
-        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
-        .readValue(
-            pubFinder.bodyString(),
-            PubsInArea::class.java
-        )
+    val returnedPubs = deserializePubsResponse(pubFinder)
 
-    if (returnedPubs.pubs == null) return "{}"
+    returnedPubs?.pubs ?: return "{}"
 
     removePubDuplicates(returnedPubs.pubs).map { pub ->
         val regularBeersList = pub.regularBeers?.toTypedArray() ?: emptyArray()
@@ -59,6 +53,16 @@ internal fun obtainListOfBeers(pubFinder: Response): String {
         })
     }
     return jacksonObjectMapper().writeValueAsString(Beers(beers))
+}
+
+internal fun deserializePubsResponse(pubFinder: Response): PubsInArea? {
+    return jacksonObjectMapper()
+        .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        .configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true)
+        .readValue(
+            pubFinder.bodyString(),
+            PubsInArea::class.java
+        )
 }
 
 internal fun removePubDuplicates(pubs: List<Pub>): List<Pub> {
