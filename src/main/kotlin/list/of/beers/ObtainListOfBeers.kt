@@ -55,7 +55,6 @@ internal fun obtainListOfBeers(pubFinder: Response): String {
     return jacksonObjectMapper().writeValueAsString(Beers(beers))
 }
 
-// TODO unit test this newly extracted method
 internal fun deserializePubsResponse(pubFinder: Response): PubsInArea? {
     return jacksonObjectMapper()
         .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
