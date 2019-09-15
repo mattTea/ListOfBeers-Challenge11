@@ -12,6 +12,17 @@ import org.spekframework.spek2.style.specification.describe
 
 object ObtainListOfBeersTest : Spek({
 
+    val fakePubFinderResponse = """{
+      "pubs": [
+        {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS", "id": "16185", "branch": "WLD", "createTS": "2019-08-03 19:31:20"},
+        {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString", "id": "12345", "branch": "Branch", "createTS": "2019-08-03 19:31:20"}
+      ]
+    }"""
+
+    val mockPubFinder = Response(OK)
+        .body(fakePubFinderResponse)
+        .header("Content-Type", "application/json")
+
     describe("pubFinder") {
         val url = "https://pubcrawlapi.appspot.com/pubcache/?uId=mike&lng=-0.141499&lat=51.496466&deg=0.003"
 
@@ -28,16 +39,7 @@ object ObtainListOfBeersTest : Spek({
 
         context("for pub api response with pubs") {
 
-            val fakePubFinderResponse = """{
-              "pubs": [
-                {"name": "Phoenix", "regularBeers": ["Youngs"], "guestBeers": ["Doom Bar"], "pubService": "phoenixPSS", "id": "16185", "branch": "WLD", "createTS": "2019-08-03 19:31:20"},
-                {"name": "Beer House", "regularBeers": ["Old Speckled Hen"], "pubService": "beerHousePubServiceString", "id": "12345", "branch": "Branch", "createTS": "2019-08-03 19:31:20"}
-              ]
-            }"""
 
-            val mockPubFinder = Response(OK)
-                .body(fakePubFinderResponse)
-                .header("Content-Type", "application/json")
 
             it("should return a String") {
                 assertThat(obtainListOfBeers(mockPubFinder)).isInstanceOf(String::class.java)
@@ -132,7 +134,15 @@ object ObtainListOfBeersTest : Spek({
         val fakeReturnedPubsList = listOf(
             Pub("Phoenix", listOf("Youngs"), listOf("Doom Bar"), "phoenixPSS", "16185", "WLD", "2019-05-16 19:31:20"),
             Pub("Phoenix", listOf("Youngs"), listOf("Doom Bar"), "phoenixPSS", "16185", "WLD", "2019-08-03 19:31:20"),
-            Pub("Beer House", listOf("Old Speckled Hen"), null, "beerHousePubServiceString", "12345", "Branch", "2019-08-03 19:31:20")
+            Pub(
+                "Beer House",
+                listOf("Old Speckled Hen"),
+                null,
+                "beerHousePubServiceString",
+                "12345",
+                "Branch",
+                "2019-08-03 19:31:20"
+            )
         )
 
         it("should return only one of the duplicate pubs") {
@@ -142,6 +152,25 @@ object ObtainListOfBeersTest : Spek({
         it("should return only the pub with the highest CreateTS of the duplicates") {
             assertThat(removePubDuplicates(fakeReturnedPubsList)[0].createTs).isEqualTo("2019-08-03 19:31:20")
             assertThat(removePubDuplicates(fakeReturnedPubsList)[1].createTs).isEqualTo("2019-08-03 19:31:20")
+        }
+    }
+
+    describe("deserializePubsResponse") {
+        it("should return list of Pub objects") {
+            val deserializedPubs = PubsInArea(listOf(
+                Pub("Phoenix", listOf("Youngs"), listOf("Doom Bar"), "phoenixPSS", "16185", "WLD", "2019-08-03 19:31:20"),
+                Pub(
+                    "Beer House",
+                    listOf("Old Speckled Hen"),
+                    null,
+                    "beerHousePubServiceString",
+                    "12345",
+                    "Branch",
+                    "2019-08-03 19:31:20"
+                )
+            ))
+
+            assertThat(deserializePubsResponse(mockPubFinder)).isEqualTo(deserializedPubs)
         }
     }
 })
